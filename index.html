@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kkaraokee - Free Open Source Karaoke App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎤 Kkaraokee</h1>
+            <p>Free Open Source Karaoke App</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-card">
+                    <h2>Upload Audio Track</h2>
+                    <div class="file-upload">
+                        <input type="file" id="audioFile" accept=".wav,.mp3,audio/wav,audio/mpeg" class="file-input">
+                        <label for="audioFile" class="file-label">
+                            <span class="upload-icon">🎵</span>
+                            <span class="upload-text">Choose Audio (WAV/MP3)</span>
+                        </label>
+                        <div id="audioFileName" class="file-name"></div>
+                    </div>
+                </div>
+
+                <div class="upload-card">
+                    <h2>Add Lyrics</h2>
+                    <div class="lyrics-input">
+                        <textarea id="lyricsText" placeholder="Enter your lyrics here...
+You can format with timestamps like:
+[00:00] First line of lyrics
+[00:05] Second line of lyrics
+[00:10] Third line of lyrics"></textarea>
+                        <div class="button-group" style="display: flex; gap: 10px;">
+                            <button id="parseLyrics" class="btn btn-primary" style="flex: 1;">Parse Lyrics</button>
+                            <button id="startSyncBtn" class="btn" style="flex: 1; background: #9c27b0; color: white;">Interactive Sync</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="sync-section player-section" id="syncSection" style="display: none;">
+                <div class="sync-header" style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="color: #667eea; margin-bottom: 10px;">Interactive Lyric Syncing</h2>
+                    <p>Play the audio and press <strong>Spacebar</strong> or click <strong>Stamp</strong> to time each line.</p>
+                </div>
+                
+                <div class="player-container">
+                    <div class="audio-controls">
+                        <button id="syncPlayBtn" class="btn btn-play">▶️ Play</button>
+                        <button id="syncPauseBtn" class="btn btn-pause" style="display: none;">⏸️ Pause</button>
+                        <button id="syncStopBtn" class="btn btn-stop">⏹️ Stop</button>
+                        <div class="progress-container">
+                            <span id="syncCurrentTime">0:00</span>
+                            <input type="range" id="syncProgressBar" class="progress-bar" min="0" max="100" value="0">
+                            <span id="syncDuration">0:00</span>
+                        </div>
+                    </div>
+
+                    <div class="lyrics-display" style="min-height: 350px;">
+                        <div class="sync-controls" style="margin-bottom: 30px; width: 100%;">
+                            <button id="stampBtn" class="btn btn-primary" style="width: 100%; font-size: 1.5rem; padding: 15px;">⏱️ STAMP (Spacebar)</button>
+                        </div>
+                        <div id="syncPrevious" class="lyrics-line" style="font-size: 1.2rem; opacity: 0.5;"></div>
+                        <div id="syncCurrent" class="lyrics-line active" style="font-size: 2rem; color: #e91e63; margin: 20px 0;">Load lyrics to start...</div>
+                        <div id="syncNext1" class="lyrics-line next"></div>
+                        <div id="syncNext2" class="lyrics-line next" style="font-size: 1rem; opacity: 0.4;"></div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                        <button id="finishSyncBtn" class="btn btn-play">Finish & Save</button>
+                        <button id="cancelSyncBtn" class="btn btn-stop">Cancel</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="player-section" id="playerSection" style="display: none;">
+                <div class="player-container">
+                    <div class="audio-controls">
+                        <button id="playBtn" class="btn btn-play">▶️ Play</button>
+                        <button id="pauseBtn" class="btn btn-pause" style="display: none;">⏸️ Pause</button>
+                        <button id="stopBtn" class="btn btn-stop">⏹️ Stop</button>
+                        <div class="progress-container">
+                            <span id="currentTime">0:00</span>
+                            <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
+                            <span id="duration">0:00</span>
+                        </div>
+                    </div>
+
+                    <div class="visualizer">
+                        <canvas id="audioCanvas" width="800" height="200"></canvas>
+                    </div>
+
+                    <div class="lyrics-display">
+                        <div id="currentLyrics" class="lyrics-line">Upload audio and lyrics to start</div>
+                        <div id="nextLyrics" class="lyrics-line next"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+    <script src="script.js"></script>
+</body>
+</html>
