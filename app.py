@@ -15,25 +15,27 @@ model = whisper.load_model("base")
 print("Whisper model loaded!")
 
 def format_timestamp(seconds):
-    """Convert seconds to [MM:SS] format"""
+    """Convert seconds to [MM:SS.xx] format"""
     minutes = int(seconds // 60)
     remaining_seconds = int(seconds % 60)
-    return f"[{minutes:02d}:{remaining_seconds:02d}]"
+    hundredths = int((seconds % 1) * 100)
+    return f"[{minutes:02d}:{remaining_seconds:02d}.{hundredths:02d}]"
 
 def align_lyrics(whisper_segments, user_lines):
     """
     Align user-provided lyrics with Whisper transcription segments
     using Levenshtein distance to find the best matches.
+    Interpolates timestamps for unmatched lines.
     """
-    aligned_lyrics = []
-    
     # Pre-process user lines (remove empty ones)
     user_lines = [line.strip() for line in user_lines if line.strip()]
     
     if not user_lines or not whisper_segments:
         return []
 
-    # Simple sequential alignment based on textual similarity
+    # Array to hold the matched start times for each user line. None if unmatched.
+    line_times = [None] * len(user_lines)
+    
     user_idx = 0
     whisper_idx = 0
     
@@ -52,21 +54,45 @@ def align_lyrics(whisper_segments, user_lines):
                 best_ratio = ratio
                 best_match_idx = i
                 
-        # If we found a reasonable match (or just take the current one if not)
-        segment = whisper_segments[best_match_idx]
-        timestamp = format_timestamp(segment['start'])
+        # Only accept match if ratio is somewhat reasonable
+        if best_ratio > 0.3:
+            line_times[user_idx] = whisper_segments[best_match_idx]['start']
+            whisper_idx = best_match_idx + 1
         
-        aligned_lyrics.append(f"{timestamp} {user_line}")
-        
-        # Move forward
-        whisper_idx = best_match_idx + 1
         user_idx += 1
         
-    # Append any remaining user lines without timestamps
-    while user_idx < len(user_lines):
-        aligned_lyrics.append(user_lines[user_idx])
-        user_idx += 1
-        
+    # Interpolate missing timestamps
+    # First, handle the beginning if it's missing
+    if line_times[0] is None:
+        line_times[0] = 0.0
+
+    # Fill in the gaps
+    for i in range(len(line_times)):
+        if line_times[i] is None:
+            # Find the next known time
+            next_known_idx = -1
+            for j in range(i + 1, len(line_times)):
+                if line_times[j] is not None:
+                    next_known_idx = j
+                    break
+            
+            if next_known_idx != -1:
+                # Interpolate between line_times[i-1] and line_times[next_known_idx]
+                prev_time = line_times[i-1]
+                next_time = line_times[next_known_idx]
+                num_missing = next_known_idx - (i - 1)
+                time_step = (next_time - prev_time) / num_missing
+                
+                for k in range(i, next_known_idx):
+                    line_times[k] = line_times[k-1] + time_step
+            else:
+                # No next known time, just add 2.5 seconds per line as an estimate
+                line_times[i] = line_times[i-1] + 2.5
+
+    aligned_lyrics = []
+    for i, line in enumerate(user_lines):
+        aligned_lyrics.append(f"{format_timestamp(line_times[i])} {line}")
+
     return aligned_lyrics
 
 @app.route('/api/sync', methods=['POST'])
@@ -116,4 +142,4 @@ def sync_lyrics():
             os.remove(audio_path)
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=True, use_reloader=False)

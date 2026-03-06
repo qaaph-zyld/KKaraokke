@@ -35,6 +35,11 @@ class KaraokePlayer {
         this.finishSyncBtn = document.getElementById('finishSyncBtn');
         this.cancelSyncBtn = document.getElementById('cancelSyncBtn');
         
+        // Main Player Lyrics UI
+        this.lyricsContainer = document.getElementById('lyricsContainer');
+        this.lineElements = [];
+        this.playerLoopId = null;
+        
         this.lyrics = [];
         this.currentLyricIndex = 0;
         this.audioContext = null;
@@ -106,10 +111,11 @@ class KaraokePlayer {
         const lines = text.split('\n');
         
         for (const line of lines) {
-            const match = line.match(/\[(\d{2}):(\d{2})\]\s*(.*)/);
+            // Regex to match [MM:SS] or [MM:SS.xx]
+            const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{1,3})?)\]\s*(.*)/);
             if (match) {
                 const minutes = parseInt(match[1]);
-                const seconds = parseInt(match[2]);
+                const seconds = parseFloat(match[2]);
                 const time = minutes * 60 + seconds;
                 const lyric = match[3].trim();
                 
@@ -117,16 +123,21 @@ class KaraokePlayer {
                     this.lyrics.push({ time, text: lyric });
                 }
             } else if (line.trim()) {
-                this.lyrics.push({ time: -1, text: line.trim() });
+                // If it doesn't have a valid timestamp, don't give it a negative time which breaks the engine.
+                // We'll skip it for actual sync, or could try to assign it to end, but skipping is safer.
+                // Alternatively, we give it a very high time so it appears at the end.
+                this.lyrics.push({ time: 999999, text: line.trim() });
             }
         }
         
         this.lyrics.sort((a, b) => a.time - b.time);
+        
+        // Remove lines with time = 999999 if we have real lyrics, or just leave them at the end.
         this.checkReadyToPlay();
         
         if (this.lyrics.length > 0) {
-            this.currentLyricsEl.textContent = 'Lyrics loaded! Press play to start';
-            this.nextLyricsEl.textContent = '';
+            this.currentLyricIndex = 0;
+            this.renderLyricsUI();
         }
     }
     
@@ -343,7 +354,7 @@ class KaraokePlayer {
             this.playBtn.style.display = 'none';
             this.pauseBtn.style.display = 'inline-block';
             this.startVisualization();
-            this.updateLyrics();
+            this.startPlayerLoop();
         }
     }
     
@@ -356,6 +367,7 @@ class KaraokePlayer {
             this.pauseBtn.style.display = 'none';
             this.playBtn.style.display = 'inline-block';
             this.stopVisualization();
+            this.stopPlayerLoop();
         }
     }
     
@@ -383,6 +395,7 @@ class KaraokePlayer {
             this.currentLyricIndex = 0;
             this.updateLyricsDisplay();
             this.stopVisualization();
+            this.stopPlayerLoop();
         }
     }
     
@@ -413,38 +426,113 @@ class KaraokePlayer {
         }
     }
     
-    updateLyrics() {
-        const currentTime = this.audioPlayer.currentTime;
+    renderLyricsUI() {
+        this.lyricsContainer.innerHTML = '';
+        this.lineElements = [];
         
+        if (this.lyrics.length === 0) {
+            const el = document.createElement('div');
+            el.className = 'lyrics-line active';
+            el.textContent = 'Upload audio and lyrics to start';
+            this.lyricsContainer.appendChild(el);
+            return;
+        }
+
+        this.lyrics.forEach((lyric, index) => {
+            const el = document.createElement('div');
+            el.className = 'lyrics-line upcoming';
+            el.textContent = lyric.text;
+            
+            // If it's one of the lines with no valid timestamp (the 999999 ones), we can style them differently or just keep them upcoming
+            if (lyric.time === 999999) {
+                el.style.opacity = '0.2';
+            }
+            
+            this.lyricsContainer.appendChild(el);
+            this.lineElements.push(el);
+        });
+        
+        this.updateLyrics();
+    }
+
+    startPlayerLoop() {
+        if (this.playerLoopId) {
+            cancelAnimationFrame(this.playerLoopId);
+        }
+        
+        const loop = () => {
+            if (!this.audioPlayer.paused && !this.syncMode) {
+                this.updateLyrics();
+            }
+            this.playerLoopId = requestAnimationFrame(loop);
+        };
+        
+        this.playerLoopId = requestAnimationFrame(loop);
+    }
+
+    stopPlayerLoop() {
+        if (this.playerLoopId) {
+            cancelAnimationFrame(this.playerLoopId);
+            this.playerLoopId = null;
+        }
+    }
+
+    updateLyrics() {
+        if (this.lyrics.length === 0 || this.lineElements.length === 0) return;
+        
+        const currentTime = this.audioPlayer.currentTime;
+        let newIndex = 0;
+        
+        // Find the active lyric line
         for (let i = this.lyrics.length - 1; i >= 0; i--) {
-            if (this.lyrics[i].time <= currentTime) {
-                if (this.currentLyricIndex !== i) {
-                    this.currentLyricIndex = i;
-                    this.updateLyricsDisplay();
-                }
+            // Ignore the un-timestamped placeholder lines for matching the active line
+            if (this.lyrics[i].time <= currentTime && this.lyrics[i].time !== 999999) {
+                newIndex = i;
                 break;
             }
+        }
+        
+        if (this.currentLyricIndex !== newIndex || currentTime === 0) {
+            this.currentLyricIndex = newIndex;
+            this.updateLyricsDisplay();
         }
     }
     
     updateLyricsDisplay() {
-        const currentLyric = this.lyrics[this.currentLyricIndex];
-        const nextLyric = this.lyrics[this.currentLyricIndex + 1];
-        
-        if (currentLyric) {
-            this.currentLyricsEl.textContent = currentLyric.text;
-            this.currentLyricsEl.className = 'lyrics-line active';
-        } else {
-            this.currentLyricsEl.textContent = '';
-            this.currentLyricsEl.className = 'lyrics-line';
+        if (this.lineElements.length === 0) return;
+
+        // Update classes for all lines
+        for (let i = 0; i < this.lineElements.length; i++) {
+            const el = this.lineElements[i];
+            
+            if (i < this.currentLyricIndex) {
+                el.className = 'lyrics-line past';
+            } else if (i === this.currentLyricIndex) {
+                el.className = 'lyrics-line active';
+            } else {
+                el.className = 'lyrics-line upcoming';
+            }
         }
-        
-        if (nextLyric) {
-            this.nextLyricsEl.textContent = nextLyric.text;
-            this.nextLyricsEl.className = 'lyrics-line next';
-        } else {
-            this.nextLyricsEl.textContent = '';
-            this.nextLyricsEl.className = 'lyrics-line';
+
+        // Calculate offset to center the active lyric
+        const activeEl = this.lineElements[this.currentLyricIndex];
+        if (activeEl) {
+            // Calculate distance from the active element's top to the container's virtual center
+            // Container height is 300px, so center is 150px.
+            // We want the active element to be vertically centered.
+            let offset = 0;
+            
+            for (let i = 0; i < this.currentLyricIndex; i++) {
+                // Approximate height of past lines (margin + content)
+                offset += this.lineElements[i].offsetHeight + 30; // 15px top/bottom margin
+            }
+            
+            // Adjust offset to center the active line itself
+            const activeLineHeight = activeEl.offsetHeight + 30;
+            const containerCenter = 150;
+            
+            const translateY = -(offset - containerCenter + (activeLineHeight / 2));
+            this.lyricsContainer.style.transform = `translateY(${translateY}px)`;
         }
     }
     
