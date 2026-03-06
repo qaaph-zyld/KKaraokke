@@ -17,6 +17,8 @@ class KaraokePlayer {
         this.audioFileName = document.getElementById('audioFileName');
         
         // Sync Mode Elements
+        this.autoSyncBtn = document.getElementById('autoSyncBtn');
+        this.syncStatus = document.getElementById('syncStatus');
         this.startSyncBtn = document.getElementById('startSyncBtn');
         this.syncSection = document.getElementById('syncSection');
         this.syncPlayBtn = document.getElementById('syncPlayBtn');
@@ -58,6 +60,7 @@ class KaraokePlayer {
         this.progressBar.addEventListener('input', (e) => this.seek(e));
         
         // Sync Mode Event Listeners
+        this.autoSyncBtn.addEventListener('click', () => this.autoSync());
         this.startSyncBtn.addEventListener('click', () => this.startSyncMode());
         this.syncPlayBtn.addEventListener('click', () => this.play());
         this.syncPauseBtn.addEventListener('click', () => this.pause());
@@ -132,6 +135,62 @@ class KaraokePlayer {
             this.playerSection.style.display = 'block';
             this.syncSection.style.display = 'none';
             this.setupAudioVisualization();
+        }
+    }
+
+    async autoSync() {
+        const text = this.lyricsText.value.trim();
+        const file = this.audioFile.files[0];
+
+        if (!text) {
+            alert('Please enter some lyrics to sync');
+            return;
+        }
+
+        if (!file) {
+            alert('Please upload an audio track first');
+            return;
+        }
+
+        this.syncStatus.style.display = 'block';
+        this.syncStatus.textContent = '⏳ Processing audio... This may take a minute depending on the file size.';
+        this.autoSyncBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('audio', file);
+        formData.append('lyrics', text);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/sync', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.lyricsText.value = data.synced_lyrics;
+                this.syncStatus.textContent = '✅ Sync complete!';
+                this.syncStatus.style.color = '#4CAF50';
+                this.parseLyrics(); // Refresh player with new timestamps
+            } else {
+                throw new Error(data.error || 'Failed to sync');
+            }
+        } catch (error) {
+            console.error('Auto-sync error:', error);
+            this.syncStatus.textContent = `❌ Error: ${error.message}`;
+            this.syncStatus.style.color = '#f44336';
+        } finally {
+            this.autoSyncBtn.disabled = false;
+            // Hide status message after 5 seconds
+            setTimeout(() => {
+                this.syncStatus.style.display = 'none';
+                this.syncStatus.style.color = '#666';
+            }, 5000);
         }
     }
 

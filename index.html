@@ -35,10 +35,12 @@ You can format with timestamps like:
 [00:00] First line of lyrics
 [00:05] Second line of lyrics
 [00:10] Third line of lyrics"></textarea>
-                        <div class="button-group" style="display: flex; gap: 10px;">
-                            <button id="parseLyrics" class="btn btn-primary" style="flex: 1;">Parse Lyrics</button>
-                            <button id="startSyncBtn" class="btn" style="flex: 1; background: #9c27b0; color: white;">Interactive Sync</button>
+                        <div class="button-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="parseLyrics" class="btn btn-primary" style="flex: 1; min-width: 120px;">Parse Lyrics</button>
+                            <button id="autoSyncBtn" class="btn" style="flex: 1; min-width: 120px; background: #ff9800; color: white;">🤖 Auto-Sync</button>
+                            <button id="startSyncBtn" class="btn" style="flex: 1; min-width: 120px; background: #9c27b0; color: white;">Interactive Sync</button>
                         </div>
+                        <div id="syncStatus" style="margin-top: 10px; color: #666; font-size: 0.9em; text-align: center; display: none;"></div>
                     </div>
                 </div>
             </section>
