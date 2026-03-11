@@ -501,30 +501,63 @@ class KaraokePlayer {
             }
         }
         
-        if (this.currentLyricIndex !== newIndex || currentTime === 0) {
-            this.currentLyricIndex = newIndex;
-            this.updateLyricsDisplay();
-        }
+        this.currentLyricIndex = newIndex;
+        // Always call updateLyricsDisplay on every frame to animate the wipe effect
+        this.updateLyricsDisplay();
     }
     
     updateLyricsDisplay() {
         if (this.lineElements.length === 0) return;
 
-        // Update classes for all lines
+        const currentTime = this.audioPlayer.currentTime;
+        let activeEl = null;
+
+        // Update classes for all lines and clear any old variables
         for (let i = 0; i < this.lineElements.length; i++) {
             const el = this.lineElements[i];
+            el.style.removeProperty('--fill-percentage'); // Reset wipe effect for all lines
             
             if (i < this.currentLyricIndex) {
                 el.className = 'lyrics-line past';
             } else if (i === this.currentLyricIndex) {
                 el.className = 'lyrics-line active';
+                activeEl = el;
             } else {
                 el.className = 'lyrics-line upcoming';
             }
         }
 
+        // Calculate and apply Karaoke Wipe effect to the active line
+        if (activeEl && this.lyrics[this.currentLyricIndex]) {
+            const currentLineTime = this.lyrics[this.currentLyricIndex].time;
+            
+            // Find the time of the *next valid* line to determine the duration of the current line
+            let nextLineTime = this.audioPlayer.duration; // Default to end of song
+            for (let i = this.currentLyricIndex + 1; i < this.lyrics.length; i++) {
+                if (this.lyrics[i].time !== 999999) {
+                    nextLineTime = this.lyrics[i].time;
+                    break;
+                }
+            }
+
+            // Calculate progress through the current line
+            const lineDuration = nextLineTime - currentLineTime;
+            
+            // If the duration is extremely short (less than 0.1s), just fill it immediately to prevent division by zero/weird math
+            if (lineDuration > 0.1) {
+                const timeElapsed = currentTime - currentLineTime;
+                let percentage = (timeElapsed / lineDuration) * 100;
+                
+                // Clamp between 0 and 100
+                percentage = Math.max(0, Math.min(100, percentage));
+                
+                activeEl.style.setProperty('--fill-percentage', `${percentage}%`);
+            } else {
+                activeEl.style.setProperty('--fill-percentage', '100%');
+            }
+        }
+
         // Calculate offset to center the active lyric
-        const activeEl = this.lineElements[this.currentLyricIndex];
         if (activeEl) {
             // Calculate distance from the active element's top to the container's virtual center
             // Container height is 300px, so center is 150px.

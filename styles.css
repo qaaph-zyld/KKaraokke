@@ -302,6 +302,14 @@ header p {
     opacity: 1;
     transform: scale(1.05);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    /* Classic Karaoke Wipe Effect */
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(to right, #ff007f var(--fill-percentage, 0%), #667eea var(--fill-percentage, 0%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: transform 0.3s ease; /* Remove color transition so wipe is instant */
 }
 
 .lyrics-line.upcoming {
