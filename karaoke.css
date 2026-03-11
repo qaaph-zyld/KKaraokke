@@ -1,0 +1,118 @@
+/*
+ * karaoke.css — Custom styles for Kkaraokee
+ * ONLY contains styles that cannot be achieved with Tailwind CSS utility classes:
+ *   1. The karaoke text wipe effect (CSS background-clip: text)
+ *   2. The lyrics window alpha-mask fade
+ *   3. The lyrics scroll container positioning
+ *
+ * All layout, spacing, colors, and responsive design is handled by Tailwind in index.html.
+ * Open Source Dependencies: Tailwind CSS (MIT), wavesurfer.js (BSD-3)
+ */
+
+/* ===== LYRICS WINDOW: Alpha mask fade at top/bottom ===== */
+.karaoke-lyrics-window {
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 12%,
+        black 88%,
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 12%,
+        black 88%,
+        transparent 100%
+    );
+}
+
+/* ===== LYRICS CONTAINER: Smooth scroll ===== */
+.karaoke-lyrics-container {
+    transition: transform 0.15s linear;
+    will-change: transform;
+}
+
+/* ===== LYRICS LINE: Base style ===== */
+.karaoke-line {
+    font-family: 'Arial Black', 'Impact', system-ui, sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    padding: 12px 40px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    line-height: 1.5;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Hard black stroke for karaoke readability */
+    -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.8);
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.9);
+}
+
+/* ===== PAST LINES ===== */
+.karaoke-line.past {
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 1.6rem;
+    opacity: 0.5;
+    transform: scale(0.9);
+}
+
+/* ===== ACTIVE LINE: The Karaoke Wipe Effect ===== */
+.karaoke-line.active {
+    font-size: 3.2rem;
+    opacity: 1;
+    transform: scale(1.05);
+    -webkit-text-stroke: 2px rgba(0, 0, 0, 0.9);
+    text-shadow: 4px 4px 0 rgba(0, 0, 0, 1);
+    /* Gradient wipe: cyan (sung) → white (unsung) */
+    background: linear-gradient(
+        to right,
+        #00e5ff var(--wipe, 0%),
+        #ffffff var(--wipe, 0%)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ===== UPCOMING LINES ===== */
+.karaoke-line.upcoming {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 2.2rem;
+    opacity: 0.9;
+}
+
+/* ===== RANGE INPUT TRACK (for browsers that need it) ===== */
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #374151;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00e5ff;
+    margin-top: -4px;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+
+input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #374151;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00e5ff;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}

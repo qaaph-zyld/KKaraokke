@@ -4,108 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kkaraokee - Free Open Source Karaoke App</title>
-    <link rel="stylesheet" href="styles.css">
+    <!-- Tailwind CSS via CDN - Open Source utility-first CSS framework -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'karaoke-bg': '#0a0a1a',
+                        'karaoke-surface': '#1a1a2e',
+                        'karaoke-accent': '#00e5ff',
+                        'karaoke-pink': '#ff007f',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- wavesurfer.js - Open Source audio waveform visualization -->
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <!-- Custom CSS: ONLY for karaoke wipe effect (cannot be done with Tailwind) -->
+    <link rel="stylesheet" href="karaoke.css">
 </head>
-<body>
-    <div class="background-effects"></div>
-    <div class="container" id="mainContainer">
-        <header id="mainHeader" class="app-header">
-            <h1>🎤 Kkaraokee</h1>
-            <p>Free Open Source Karaoke App</p>
+<body class="bg-karaoke-bg min-h-screen text-gray-200 font-sans overflow-x-hidden">
+
+    <!-- ===== SETUP VIEW ===== -->
+    <div id="setupView" class="max-w-5xl mx-auto px-4 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-bold text-white mb-2 drop-shadow-lg">🎤 Kkaraokee</h1>
+            <p class="text-lg text-gray-400">Free Open Source Karaoke App</p>
         </header>
 
-        <main>
-            <section class="upload-section" id="setupSection">
-                <div class="upload-card">
-                    <h2>Upload Audio Track</h2>
-                    <div class="file-upload">
-                        <input type="file" id="audioFile" accept=".wav,.mp3,audio/wav,audio/mpeg" class="file-input">
-                        <label for="audioFile" class="file-label">
-                            <span class="upload-icon">🎵</span>
-                            <span class="upload-text">Choose Audio (WAV/MP3)</span>
-                        </label>
-                        <div id="audioFileName" class="file-name"></div>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Upload Audio Card -->
+            <div class="bg-karaoke-surface border border-gray-700 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-semibold text-white mb-4">Upload Audio Track</h2>
+                <label for="audioFile" class="flex flex-col items-center justify-center p-10 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer hover:border-karaoke-accent hover:bg-karaoke-accent/5 transition-all duration-200">
+                    <span class="text-5xl mb-3">🎵</span>
+                    <span class="text-gray-300 font-semibold">Choose Audio (WAV/MP3)</span>
+                </label>
+                <input type="file" id="audioFile" accept=".wav,.mp3,audio/wav,audio/mpeg" class="hidden">
+                <div id="audioFileName" class="mt-3 px-4 py-2 bg-gray-800 rounded-lg text-center text-sm text-gray-400 min-h-[36px] flex items-center justify-center"></div>
+            </div>
+
+            <!-- Lyrics Card -->
+            <div class="bg-karaoke-surface border border-gray-700 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-semibold text-white mb-4">Add Lyrics</h2>
+                <textarea id="lyricsText" class="w-full h-48 p-4 bg-gray-900 border border-gray-700 rounded-xl text-sm text-gray-200 font-mono resize-vertical focus:outline-none focus:border-karaoke-accent focus:ring-1 focus:ring-karaoke-accent/50 placeholder-gray-600" placeholder="Paste your lyrics here..."></textarea>
+                <div class="flex gap-3 mt-3 flex-wrap">
+                    <button id="parseLyrics" class="flex-1 min-w-[100px] px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors uppercase text-sm tracking-wide">Parse Lyrics</button>
+                    <button id="autoSyncBtn" class="flex-1 min-w-[100px] px-4 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors uppercase text-sm tracking-wide">🤖 Auto-Sync</button>
+                    <button id="startSyncBtn" class="flex-1 min-w-[100px] px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors uppercase text-sm tracking-wide">Interactive Sync</button>
                 </div>
+                <div id="syncStatus" class="mt-3 text-sm text-center text-gray-400 hidden"></div>
+            </div>
+        </div>
 
-                <div class="upload-card">
-                    <h2>Add Lyrics</h2>
-                    <div class="lyrics-input">
-                        <textarea id="lyricsText" placeholder="Enter your lyrics here...
-You can format with timestamps like:
-[00:00] First line of lyrics
-[00:05] Second line of lyrics
-[00:10] Third line of lyrics"></textarea>
-                        <div class="button-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button id="parseLyrics" class="btn btn-primary" style="flex: 1; min-width: 120px;">Parse Lyrics</button>
-                            <button id="autoSyncBtn" class="btn" style="flex: 1; min-width: 120px; background: #ff9800; color: white;">🤖 Auto-Sync</button>
-                            <button id="startSyncBtn" class="btn" style="flex: 1; min-width: 120px; background: #9c27b0; color: white;">Interactive Sync</button>
-                        </div>
-                        <div id="syncStatus" style="margin-top: 10px; color: #666; font-size: 0.9em; text-align: center; display: none;"></div>
-                    </div>
+        <!-- Waveform Preview (visible in setup too, after upload) -->
+        <div id="waveformSetup" class="bg-karaoke-surface border border-gray-700 rounded-2xl p-4 shadow-xl hidden">
+            <div id="waveform" class="w-full"></div>
+        </div>
+    </div>
+
+    <!-- ===== INTERACTIVE SYNC VIEW ===== -->
+    <div id="syncView" class="hidden max-w-4xl mx-auto px-4 py-8">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-karaoke-accent mb-2">Interactive Lyric Syncing</h2>
+            <p class="text-gray-400">Play the audio and press <strong class="text-white">Spacebar</strong> or click <strong class="text-white">Stamp</strong> to time each line.</p>
+        </div>
+
+        <div class="bg-karaoke-surface border border-gray-700 rounded-2xl p-6 shadow-xl">
+            <!-- Sync Controls -->
+            <div class="flex items-center gap-3 mb-6 flex-wrap">
+                <button id="syncPlayBtn" class="px-5 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-full transition-colors">▶ Play</button>
+                <button id="syncPauseBtn" class="hidden px-5 py-2 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-full transition-colors">⏸ Pause</button>
+                <button id="syncStopBtn" class="px-5 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-full transition-colors">⏹ Stop</button>
+                <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+                    <span id="syncCurrentTime" class="text-sm font-mono text-gray-400">0:00</span>
+                    <input type="range" id="syncProgressBar" class="flex-1 h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-karaoke-accent" min="0" max="100" value="0">
+                    <span id="syncDuration" class="text-sm font-mono text-gray-400">0:00</span>
                 </div>
-            </section>
+            </div>
 
-            <section class="sync-section player-section" id="syncSection" style="display: none;">
-                <div class="sync-header" style="text-align: center; margin-bottom: 20px;">
-                    <h2 style="color: #667eea; margin-bottom: 10px;">Interactive Lyric Syncing</h2>
-                    <p>Play the audio and press <strong>Spacebar</strong> or click <strong>Stamp</strong> to time each line.</p>
-                </div>
-                
-                <div class="player-container">
-                    <div class="audio-controls">
-                        <button id="syncPlayBtn" class="btn btn-play">▶️ Play</button>
-                        <button id="syncPauseBtn" class="btn btn-pause" style="display: none;">⏸️ Pause</button>
-                        <button id="syncStopBtn" class="btn btn-stop">⏹️ Stop</button>
-                        <div class="progress-container">
-                            <span id="syncCurrentTime">0:00</span>
-                            <input type="range" id="syncProgressBar" class="progress-bar" min="0" max="100" value="0">
-                            <span id="syncDuration">0:00</span>
-                        </div>
-                    </div>
+            <!-- Stamp Button -->
+            <button id="stampBtn" class="w-full py-4 mb-6 text-2xl font-black bg-karaoke-pink hover:bg-pink-500 text-white rounded-xl transition-colors shadow-lg shadow-karaoke-pink/20">⏱️ STAMP (Spacebar)</button>
 
-                    <div class="lyrics-display" style="min-height: 350px;">
-                        <div class="sync-controls" style="margin-bottom: 30px; width: 100%;">
-                            <button id="stampBtn" class="btn btn-primary" style="width: 100%; font-size: 1.5rem; padding: 15px;">⏱️ STAMP (Spacebar)</button>
-                        </div>
-                        <div id="syncPrevious" class="lyrics-line" style="font-size: 1.2rem; opacity: 0.5;"></div>
-                        <div id="syncCurrent" class="lyrics-line active" style="font-size: 2rem; color: #e91e63; margin: 20px 0;">Load lyrics to start...</div>
-                        <div id="syncNext1" class="lyrics-line next"></div>
-                        <div id="syncNext2" class="lyrics-line next" style="font-size: 1rem; opacity: 0.4;"></div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                        <button id="finishSyncBtn" class="btn btn-play">Finish & Save</button>
-                        <button id="cancelSyncBtn" class="btn btn-stop">Cancel</button>
-                    </div>
-                </div>
-            </section>
+            <!-- Sync Lyrics Display -->
+            <div class="text-center py-8 space-y-4 min-h-[250px] flex flex-col justify-center">
+                <div id="syncPrevious" class="text-xl text-gray-500 transition-all"></div>
+                <div id="syncCurrent" class="text-3xl font-bold text-karaoke-pink transition-all">Load lyrics to start...</div>
+                <div id="syncNext1" class="text-xl text-gray-400 transition-all"></div>
+                <div id="syncNext2" class="text-lg text-gray-600 transition-all"></div>
+            </div>
 
-            <section class="player-section" id="playerSection" style="display: none;">
-                <div class="player-container">
-                    <div class="audio-controls">
-                        <button id="playBtn" class="btn btn-play">▶️ Play</button>
-                        <button id="pauseBtn" class="btn btn-pause" style="display: none;">⏸️ Pause</button>
-                        <button id="stopBtn" class="btn btn-stop">⏹️ Stop</button>
-                        <div class="progress-container">
-                            <span id="currentTime">0:00</span>
-                            <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
-                            <span id="duration">0:00</span>
-                        </div>
-                    </div>
+            <div class="flex gap-3 justify-center mt-4">
+                <button id="finishSyncBtn" class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-colors">Finish & Save</button>
+                <button id="cancelSyncBtn" class="px-6 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-                    <div class="visualizer">
-                        <canvas id="audioCanvas" width="800" height="200"></canvas>
-                    </div>
+    <!-- ===== KARAOKE PLAYER VIEW (Theater Mode) ===== -->
+    <div id="playerView" class="hidden fixed inset-0 bg-black z-50 flex flex-col">
+        <!-- Lyrics Area: Takes up most of the screen -->
+        <div id="lyricsWindow" class="karaoke-lyrics-window flex-1 relative overflow-hidden flex justify-center">
+            <div id="lyricsContainer" class="karaoke-lyrics-container absolute w-full max-w-5xl flex flex-col items-center" style="top: 50%;">
+                <div class="karaoke-line active">Upload audio and lyrics to start</div>
+            </div>
+        </div>
 
-                    <div class="lyrics-window">
-                        <div id="lyricsContainer" class="lyrics-container">
-                            <div class="lyrics-line active">Upload audio and lyrics to start</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- Floating Controls Bar -->
+        <div id="playerControls" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-3xl bg-black/80 backdrop-blur-md border border-gray-700/50 rounded-full px-6 py-3 flex items-center gap-4 z-[1000] opacity-0 hover:opacity-100 transition-opacity duration-300 shadow-2xl">
+            <button id="playBtn" class="px-4 py-1.5 bg-green-600 hover:bg-green-500 text-white font-bold rounded-full text-sm transition-colors">▶ Play</button>
+            <button id="pauseBtn" class="hidden px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-full text-sm transition-colors">⏸ Pause</button>
+            <button id="stopBtn" class="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-full text-sm transition-colors">⏹ Stop</button>
+            <span id="currentTime" class="text-xs font-mono text-gray-400 min-w-[40px]">0:00</span>
+            <input type="range" id="progressBar" class="flex-1 h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-karaoke-accent" min="0" max="100" value="0">
+            <span id="duration" class="text-xs font-mono text-gray-400 min-w-[40px]">0:00</span>
+            <button id="exitTheaterBtn" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-full text-xs transition-colors">✕ Exit</button>
+        </div>
     </div>
 
     <audio id="audioPlayer"></audio>
