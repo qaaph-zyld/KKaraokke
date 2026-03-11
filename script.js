@@ -354,6 +354,11 @@ class KaraokePlayer {
                 this.source = this.audioContext.createMediaElementSource(this.audioPlayer);
                 this.source.connect(this.analyser);
                 this.analyser.connect(this.audioContext.destination);
+                
+                // Force resume just in case browser created it in suspended state
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
             } catch (e) {
                 console.error("AudioContext setup failed:", e);
             }
@@ -361,6 +366,8 @@ class KaraokePlayer {
     }
     
     play() {
+        console.log("Play clicked. Audio state:", this.audioPlayer.readyState, "Src:", this.audioPlayer.src);
+        
         // Setup visualization here where user explicitly clicked play
         if (!this.audioContext) {
             this.setupAudioVisualization();
@@ -368,10 +375,15 @@ class KaraokePlayer {
             this.audioContext.resume();
         }
 
-        this.audioPlayer.play().catch(e => {
-            console.error("Playback failed:", e);
-            alert("Playback failed. Make sure you've uploaded an audio file.");
-        });
+        const playPromise = this.audioPlayer.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log("Audio playing successfully.");
+            }).catch(e => {
+                console.error("Playback failed:", e);
+                alert("Playback failed. Error: " + e.message);
+            });
+        }
 
         if (this.syncMode) {
             this.syncPlayBtn.style.display = 'none';
