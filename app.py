@@ -7,7 +7,8 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for both localhost and 127.0.0.1
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
 
 # Load the whisper model (using 'base' for faster processing, can be changed to 'small' or 'medium' for better accuracy)
 print("Loading Whisper model...")

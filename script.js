@@ -150,21 +150,23 @@ class KaraokePlayer {
     }
 
     async autoSync() {
+        console.log("AutoSync button clicked");
         const text = this.lyricsText.value.trim();
         const file = this.audioFile.files[0];
 
         if (!text) {
-            alert('Please enter some lyrics to sync');
+            alert('Please enter some lyrics first');
             return;
         }
 
         if (!file) {
-            alert('Please upload an audio track first');
+            alert('Please select an audio file first');
             return;
         }
 
         this.syncStatus.style.display = 'block';
-        this.syncStatus.textContent = '⏳ Processing audio... This may take a minute depending on the file size.';
+        this.syncStatus.textContent = '⏳ Processing audio... This may take a minute depending on the file size. Check IDE console for backend progress.';
+        this.syncStatus.style.color = '#333';
         this.autoSyncBtn.disabled = true;
 
         const formData = new FormData();
@@ -172,36 +174,42 @@ class KaraokePlayer {
         formData.append('lyrics', text);
 
         try {
-            const response = await fetch('http://localhost:5000/api/sync', {
+            console.log("Sending request to backend...");
+            // Use explicit 127.0.0.1 to avoid localhost resolution issues
+            const response = await fetch('http://127.0.0.1:5000/api/sync', {
                 method: 'POST',
                 body: formData
             });
 
+            console.log("Response status:", response.status);
+
             if (!response.ok) {
-                throw new Error(`Server error: ${response.statusText}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Server returned ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
-
+            console.log("Received data:", data);
+            
             if (data.success) {
                 this.lyricsText.value = data.synced_lyrics;
-                this.syncStatus.textContent = '✅ Sync complete!';
+                this.syncStatus.textContent = '✅ Synchronization complete!';
                 this.syncStatus.style.color = '#4CAF50';
-                this.parseLyrics(); // Refresh player with new timestamps
+                this.parseLyrics(); // Immediately load the new synced lyrics
             } else {
-                throw new Error(data.error || 'Failed to sync');
+                throw new Error(data.error || 'Unknown error occurred');
             }
         } catch (error) {
             console.error('Auto-sync error:', error);
-            this.syncStatus.textContent = `❌ Error: ${error.message}`;
+            this.syncStatus.textContent = `❌ Error: ${error.message}. Is the Python backend running on port 5000?`;
             this.syncStatus.style.color = '#f44336';
+            alert(`Auto-Sync Failed: ${error.message}\n\nPlease ensure you ran 'python app.py' in the terminal.`);
         } finally {
             this.autoSyncBtn.disabled = false;
-            // Hide status message after 5 seconds
+            // Hide status message after 10 seconds (increased from 5 for errors to be readable)
             setTimeout(() => {
                 this.syncStatus.style.display = 'none';
-                this.syncStatus.style.color = '#666';
-            }, 5000);
+            }, 10000);
         }
     }
 
