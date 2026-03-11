@@ -1,98 +1,62 @@
-# 🎤 Kkaraokee - Free Open Source Karaoke App
+# Kkaraokee - Auto-Sync Lyrics Karaoke Web App
 
-A simple, web-based karaoke application that allows you to upload WAV audio tracks and synchronized lyrics to create your own karaoke experience.
+A free, open-source local web application that allows you to upload any WAV or MP3 audio file, paste raw text lyrics, and automatically generate a beautifully synchronized karaoke experience using AI.
 
 ## Features
+- **Upload Audio**: Supports both `.wav` and `.mp3`.
+- **Paste Lyrics**: Just paste plain text lyrics.
+- **🤖 Auto-Sync (AI)**: Uses OpenAI Whisper and Levenshtein distance alignment to automatically generate high-precision (`[MM:SS.xx]`) timestamps for your lyrics.
+- **Interactive Sync**: If you prefer, manually sync lyrics using the Spacebar.
+- **Smooth Playback UI**: Hardware-accelerated smooth scrolling UI that keeps the active lyric centered, fading out past lines and highlighting the current one.
+- **Audio Visualizer**: Real-time waveform visualization while playing.
 
-- 🎵 **WAV Audio Support**: Upload any WAV file as your karaoke backing track
-- 📝 **Lyric Synchronization**: Add lyrics with timestamps for perfect timing
-- 🎮 **Playback Controls**: Play, pause, stop, and seek through your tracks
-- 📊 **Audio Visualization**: Real-time frequency visualization while playing
-- 📱 **Responsive Design**: Works on desktop and mobile devices
-- 🆓 **Free & Open Source**: No costs, no ads, completely free to use
+## Requirements
+- Python 3.13+
+- Node.js (Optional, for running frontend) or Python's built-in HTTP server.
 
-## How to Use
+## Installation
 
-### 1. Upload Audio Track
-- Click on "Choose WAV file" to select your audio file
-- Only WAV format is supported for best quality
-- The file name will appear once uploaded
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Kkaraokee/windsurf-project.git
+   cd windsurf-project
+   ```
 
-### 2. Add Lyrics
-- Enter your lyrics in the text area using timestamp format:
-  ```
-  [00:00] First line of lyrics
-  [00:05] Second line of lyrics  
-  [00:10] Third line of lyrics
-  ```
-- Timestamps use MM:SS format (minutes:seconds)
-- Click "Parse Lyrics" to process the text
-- Lyrics without timestamps will be displayed but not synchronized
+2. **Install Python Backend Dependencies**
+   ```bash
+   pip install flask flask-cors openai-whisper python-Levenshtein werkzeug
+   ```
+   *Note: Whisper may also require `ffmpeg` to be installed on your system.*
 
-### 3. Play Karaoke
-- Once both audio and lyrics are loaded, the player will appear
-- Use the play button to start the karaoke
-- Current lyrics highlight in blue, next lyrics appear in gray
-- Control playback with the progress bar or control buttons
+## Usage
 
-## Technical Details
+You must run both the Frontend web server and the Backend API server simultaneously.
 
-### Supported File Formats
-- **Audio**: WAV (.wav) only
-- **Lyrics**: Plain text with timestamp formatting
-
-### Browser Compatibility
-- Chrome/Chromium (recommended)
-- Firefox
-- Safari
-- Edge
-
-### Audio Features
-- Web Audio API for visualization
-- HTML5 Audio element for playback
-- Real-time frequency analysis
-- Synchronized lyric display
-
-## Development
-
-This is a pure frontend application using:
-- HTML5 for structure
-- CSS3 for styling (with gradients and animations)
-- Vanilla JavaScript for functionality
-- Web Audio API for audio processing
-
-### File Structure
+### 1. Start the Backend API Server
+In a terminal, navigate to the project directory and run:
+```bash
+python app.py
 ```
-kkaraokee/
-├── index.html      # Main application interface
-├── styles.css      # Styling and responsive design
-├── script.js       # Core karaoke functionality
-└── README.md       # This documentation
+This will start the Flask server on `http://127.0.0.1:5000`. The first run will download the Whisper "base" model.
+
+### 2. Start the Frontend Web Server
+In a second terminal, navigate to the project directory and run:
+```bash
+python -m http.server 3000
 ```
+*(Or use any other static file server like `npx serve -p 3000`)*
 
-## Contributing
+### 3. Open the App
+Open your web browser and go to `http://localhost:3000`.
 
-As an open source project, contributions are welcome! You can:
-- Report bugs and issues
-- Suggest new features
-- Submit pull requests for improvements
-- Share your karaoke creations
+### 4. How to Create a Karaoke Track
+1. Click **Choose Audio (WAV/MP3)** and select your track.
+2. Paste the plain text lyrics into the text area.
+3. Click the **🤖 Auto-Sync** button.
+4. Wait for the backend to process the audio (Check your terminal running `app.py` for progress).
+5. Once complete, the synced lyrics with timestamps will appear. Click **▶️ Play** to enjoy your smoothly scrolling karaoke!
 
-## License
-
-This project is released under the MIT License, making it free to use, modify, and distribute.
-
-## Future Enhancements
-
-Potential features for future versions:
-- Support for additional audio formats (MP3, OGG)
-- Lyric editor with visual timeline
-- Playlist management
-- Recording capabilities
-- Keyboard shortcuts
-- Fullscreen mode
-- Custom themes and styling
-
----
-
-**Start creating your karaoke experience today! 🎤**
+## Troubleshooting
+- **Failed to fetch / CORS Errors**: Ensure the Python backend is running and that you are accessing the frontend via `http://localhost:3000` or `http://127.0.0.1:3000`.
+- **Whisper FP16 Warning**: If you see a warning about FP16 not supported on CPU, this is normal and can be safely ignored.
+- **Auto-Sync takes too long**: Processing time depends heavily on your CPU and the length of the song. The "base" model is used for speed, but large files will still take time.
