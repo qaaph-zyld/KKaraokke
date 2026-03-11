@@ -175,8 +175,9 @@ class KaraokePlayer {
 
         try {
             console.log("Sending request to backend...");
-            // Use explicit 127.0.0.1 to avoid localhost resolution issues
-            const response = await fetch('http://127.0.0.1:5000/api/sync', {
+            // Use the exact same hostname as the frontend to completely avoid localhost vs 127.0.0.1 mismatches
+            const backendUrl = `http://${window.location.hostname}:5000/api/sync`;
+            const response = await fetch(backendUrl, {
                 method: 'POST',
                 body: formData
             });
