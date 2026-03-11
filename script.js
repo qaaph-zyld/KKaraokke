@@ -145,7 +145,8 @@ class KaraokePlayer {
         if (this.audioPlayer.src && this.lyrics.length > 0 && !this.syncMode) {
             this.playerSection.style.display = 'block';
             this.syncSection.style.display = 'none';
-            this.setupAudioVisualization();
+            // DO NOT call setupAudioVisualization here, as it requires user interaction first
+            // It will be called inside the play() function instead
         }
     }
 
@@ -343,19 +344,35 @@ class KaraokePlayer {
     }
     
     setupAudioVisualization() {
-        if (!this.audioContext) {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = 256;
-            
-            this.source = this.audioContext.createMediaElementSource(this.audioPlayer);
-            this.source.connect(this.analyser);
-            this.analyser.connect(this.audioContext.destination);
+        // Only setup if we don't have a context yet AND we have user interaction (playing)
+        if (!this.audioContext && !this.audioPlayer.paused) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = 256;
+                
+                this.source = this.audioContext.createMediaElementSource(this.audioPlayer);
+                this.source.connect(this.analyser);
+                this.analyser.connect(this.audioContext.destination);
+            } catch (e) {
+                console.error("AudioContext setup failed:", e);
+            }
         }
     }
     
     play() {
-        this.audioPlayer.play();
+        // Setup visualization here where user explicitly clicked play
+        if (!this.audioContext) {
+            this.setupAudioVisualization();
+        } else if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
+        this.audioPlayer.play().catch(e => {
+            console.error("Playback failed:", e);
+            alert("Playback failed. Make sure you've uploaded an audio file.");
+        });
+
         if (this.syncMode) {
             this.syncPlayBtn.style.display = 'none';
             this.syncPauseBtn.style.display = 'inline-block';
