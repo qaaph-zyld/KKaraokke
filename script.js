@@ -344,8 +344,8 @@ class KaraokePlayer {
     }
     
     setupAudioVisualization() {
-        // Only setup if we don't have a context yet AND we have user interaction (playing)
-        if (!this.audioContext && !this.audioPlayer.paused) {
+        // Only setup if we don't have a context yet. This is called from play() which is a user gesture.
+        if (!this.audioContext) {
             try {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 this.analyser = this.audioContext.createAnalyser();
