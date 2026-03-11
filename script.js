@@ -90,13 +90,14 @@ class KaraokePlayer {
     
     handleAudioUpload(event) {
         const file = event.target.files[0];
-        if (file && (file.type === 'audio/wav' || file.type === 'audio/mpeg' || file.name.toLowerCase().endsWith('.mp3'))) {
+        if (file && (file.type === 'audio/wav' || file.type === 'audio/mpeg' || file.name.endsWith('.mp3') || file.name.endsWith('.wav'))) {
+            this.audioFileName.textContent = file.name;
             const url = URL.createObjectURL(file);
             this.audioPlayer.src = url;
-            this.audioFileName.textContent = `📁 ${file.name}`;
+            this.audioPlayer.load(); // Explicitly load the audio source
             this.checkReadyToPlay();
         } else {
-            this.audioFileName.textContent = '❌ Please select a valid WAV or MP3 file';
+            alert('Please select a valid WAV or MP3 file');
         }
     }
     
@@ -163,6 +164,13 @@ class KaraokePlayer {
         if (!file) {
             alert('Please select an audio file first');
             return;
+        }
+
+        // Ensure audio player has the src set before sync in case it was missed
+        if (!this.audioPlayer.src) {
+            const url = URL.createObjectURL(file);
+            this.audioPlayer.src = url;
+            this.audioPlayer.load();
         }
 
         this.syncStatus.style.display = 'block';
