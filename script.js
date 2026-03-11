@@ -399,6 +399,12 @@ class KaraokePlayer {
         } else {
             this.playBtn.style.display = 'none';
             this.pauseBtn.style.display = 'inline-block';
+            
+            // Enable Theater Mode for immersive karaoke
+            document.body.classList.add('theater-mode');
+            const setupSection = document.getElementById('setupSection');
+            if (setupSection) setupSection.classList.add('hidden');
+            
             this.startVisualization();
             this.startPlayerLoop();
         }
@@ -412,6 +418,12 @@ class KaraokePlayer {
         } else {
             this.pauseBtn.style.display = 'none';
             this.playBtn.style.display = 'inline-block';
+            
+            // Disable Theater Mode to show controls again
+            document.body.classList.remove('theater-mode');
+            const setupSection = document.getElementById('setupSection');
+            if (setupSection) setupSection.classList.remove('hidden');
+            
             this.stopVisualization();
             this.stopPlayerLoop();
         }
@@ -436,6 +448,12 @@ class KaraokePlayer {
         } else {
             this.pauseBtn.style.display = 'none';
             this.playBtn.style.display = 'inline-block';
+            
+            // Disable Theater Mode
+            document.body.classList.remove('theater-mode');
+            const setupSection = document.getElementById('setupSection');
+            if (setupSection) setupSection.classList.remove('hidden');
+            
             this.progressBar.value = 0;
             this.currentTimeEl.textContent = '0:00';
             this.currentLyricIndex = 0;
